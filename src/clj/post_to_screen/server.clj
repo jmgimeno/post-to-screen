@@ -10,9 +10,9 @@
             [ring.adapter.jetty :refer [run-jetty]]
             [hiccup.page :as hp]
             [hiccup.form :as hf]
-            ))
+            [hiccup.util :as hu]))
 
-(defn bootstrap-wrap [title & body]
+(defn page-layout [title & body]
   (hp/html5
     [:head
      [:meta {:charset "utf-8"}]
@@ -26,8 +26,24 @@
      (hp/include-js "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js")]))
 
 
+(defn code-layout [title & body]
+  (hp/html5
+    [:head
+     [:meta {:charset "utf-8"}]
+     [:meta {:http-equiv "X-UA-Compatible" :content "IE=edge"}]
+     [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
+     [:title title]
+     (hp/include-css "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css")
+     (hp/include-css "http://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/zenburn.min.css")
+     (hp/include-js "http://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js")]
+    [:body
+     [:script "hljs.initHighlightingOnLoad();"]
+     [:div.container
+      body]
+     (hp/include-js "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js")]))
+
 (defn post-form []
-  (bootstrap-wrap
+  (page-layout
     "Post to Screen"
     [:h1 "Post to Screen"]
     (hf/form-to {:role "form"}
@@ -37,10 +53,10 @@
       (hf/submit-button {:class "btn btn-primary"} "Post code"))))
 
 (defn show-code [code]
-  (bootstrap-wrap
+  (code-layout
     "Posted code"
-    [:body
-     [:h1 code]]))
+    [:pre
+     [:code (hu/escape-html code)]]))
 
 (deftemplate page
   (io/resource "index.html") [] [:body] (if is-dev? inject-devmode-html identity))
