@@ -10,7 +10,15 @@
             [ring.adapter.jetty :refer [run-jetty]]
             [hiccup.page :as page]
             [hiccup.form :as form]
-            [hiccup.util :as util]))
+            [hiccup.util :as util]
+            [ring.util.response :refer [redirect]]))
+
+; State
+
+(def posts (ref {}))
+(def nextId (ref 1))
+
+; Post form
 
 (defn page-layout [title & body]
   (page/html5
@@ -25,6 +33,17 @@
       body]
      (page/include-js "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js")]))
 
+(defn post-form []
+  (page-layout
+    "Post to Screen"
+    [:h1 "Post to Screen"]
+    (form/form-to {:role "form"}
+                  [:post "/posts"]
+                  [:div.form-group
+                   (form/text-area {:class "form-control" :rows 20} "code")]
+                  (form/submit-button {:class "btn btn-primary"} "Post code"))))
+
+; Show code
 
 (defn code-layout [title & body]
   (page/html5
@@ -42,21 +61,33 @@
       body]
      (page/include-js "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js")]))
 
-(defn post-form []
-  (page-layout
-    "Post to Screen"
-    [:h1 "Post to Screen"]
-    (form/form-to {:role "form"}
-      [:post "/"]
-      [:div.form-group
-       (form/text-area {:class "form-control" :rows 20} "code")]
-      (form/submit-button {:class "btn btn-primary"} "Post code"))))
+(defn show-code [id]
+  (let [code (get @posts (read-string id))]
+    (if code
+      (code-layout
+        (str "Fragment " id)
+        [:h1 (str "Fragment " id)]
+        [:pre
+         [:code (util/escape-html code)]])
+      (page-layout
+        "Unexisten fragment"
+        [:div {:class "alert alert-danger" :role "alert"} "Unexistent fragment"]))))
 
-(defn show-code [code]
-  (code-layout
-    "Posted code"
-    [:pre
-     [:code (util/escape-html code)]]))
+(defn post-code [code]
+  (dosync
+    (alter posts assoc @nextId code)
+    (alter nextId inc))
+  (redirect "/"))
+
+; Show list of posts
+
+(defn show-posts []
+  (page-layout
+    "List of fragments"
+    [:h1 "List of fragments"]
+    [:ul
+     (for [k (reverse (sort (keys @posts)))]
+       [:li [:a {:href (str "/posts/" k)} (str "Fragment " k)]])]))
 
 (deftemplate page
   (io/resource "index.html") [] [:body] (if is-dev? inject-devmode-html identity))
@@ -64,9 +95,15 @@
 (defroutes routes
   (resources "/")
   (resources "/react" {:root "react"})
+
   (GET "/" [_] (post-form))
-  (POST "/" [code] (show-code code))
-  (GET "/*" req (page)))
+
+  (GET  "/posts" [_] (show-posts))
+  (POST "/posts" [code] (post-code code))
+
+  (GET "/posts/:id" [id] (show-code id))
+
+  #_(GET "/*" req (page)))
 
 (def http-handler
   (if is-dev?
