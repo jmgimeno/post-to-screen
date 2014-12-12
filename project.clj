@@ -1,6 +1,6 @@
-(defproject post-to-screen "0.1.0-SNAPSHOT"
-  :description "FIXME: write description"
-  :url "http://example.com/FIXME"
+(defproject post-to-screen "0.2.0-SNAPSHOT"
+  :description "Webapp to post code to show on the screen"
+  :url "https://github.com/jmgimeno/post-to-screen"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
 

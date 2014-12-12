@@ -2,7 +2,7 @@
   (:require [clojure.java.io :as io]
             [post-to-screen.dev :refer [is-dev? inject-devmode-html browser-repl start-figwheel]]
             [compojure.core :refer [GET POST defroutes]]
-            [compojure.route :refer [resources]]
+            [compojure.route :refer [resources not-found]]
             [compojure.handler :refer [api]]
             [net.cgrand.enlive-html :refer [deftemplate]]
             [ring.middleware.reload :as reload]
@@ -69,9 +69,12 @@
         [:h1 (str "Fragment " id)]
         [:pre
          [:code (util/escape-html code)]])
-      (page-layout
-        "Unexisten fragment"
-        [:div {:class "alert alert-danger" :role "alert"} "Unexistent fragment"]))))
+      (not-found
+        (page-layout
+          "Unexistent fragment"
+          [:div {:class "alert alert-danger" :role "alert"} "Unexistent fragment"])))))
+
+; Post code
 
 (defn post-code [code]
   (dosync
@@ -89,6 +92,13 @@
      (for [k (reverse (sort (keys @posts)))]
        [:li [:a {:href (str "/posts/" k)} (str "Fragment " k)]])]))
 
+; 404 page
+
+(defn show-not-found []
+  (page-layout
+    "Unexistent page"
+    [:div {:class "alert alert-danger" :role "alert"} "Unexistent page"]))
+
 (deftemplate page
   (io/resource "index.html") [] [:body] (if is-dev? inject-devmode-html identity))
 
@@ -103,7 +113,9 @@
 
   (GET "/posts/:id" [id] (show-code id))
 
-  #_(GET "/*" req (page)))
+  #_(GET "/*" req (page))
+
+  (not-found (show-not-found)))
 
 (def http-handler
   (if is-dev?
@@ -116,7 +128,7 @@
       (if is-dev? (start-figwheel))
       (let [port (Integer. (or port (env :port) 10555))]
         (print "Starting web server on port" port ".\n")
-        (run-jetty http-handler {:port port
+        (run-jetty #'http-handler {:port port
                           :join? false}))))
   server)
 

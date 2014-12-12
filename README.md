@@ -1,5 +1,10 @@
 # post-to-screen
 
+A webapp for posting code for the screen.
+
+## TODOs
+
+* Convert to a single page app via clojurescript + websockets
 
 ## Development
 
@@ -82,7 +87,7 @@ Now your app is running at
 
 ## License
 
-Copyright © 2014 FIXME
+Copyright © 2014 Juan Manuel Gimeno Illa
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
