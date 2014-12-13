@@ -1,4 +1,4 @@
-(defproject post-to-screen "0.2.0-SNAPSHOT"
+(defproject post-to-screen "0.3.0-SNAPSHOT"
   :description "Webapp to post code to show on the screen"
   :url "https://github.com/jmgimeno/post-to-screen"
   :license {:name "Eclipse Public License"
@@ -17,7 +17,8 @@
                  [com.cemerick/piggieback "0.1.3"]
                  [weasel "0.4.0-SNAPSHOT"]
                  [leiningen "2.5.0"]
-                 [hiccup "1.0.5"]]
+                 [hiccup "1.0.5"]
+                 [http-kit "2.1.16"]]
 
   :plugins [[lein-cljsbuild "1.0.3"]
             [lein-environ "1.0.0"]]

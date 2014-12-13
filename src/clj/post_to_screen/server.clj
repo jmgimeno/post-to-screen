@@ -3,20 +3,25 @@
             [post-to-screen.dev :refer [is-dev? inject-devmode-html browser-repl start-figwheel]]
             [compojure.core :refer [GET POST defroutes]]
             [compojure.route :refer [resources not-found]]
-            [compojure.handler :refer [api]]
+            [compojure.handler :refer [site]]
             [net.cgrand.enlive-html :refer [deftemplate]]
             [ring.middleware.reload :as reload]
             [environ.core :refer [env]]
-            [ring.adapter.jetty :refer [run-jetty]]
             [hiccup.page :as page]
             [hiccup.form :as form]
             [hiccup.util :as util]
-            [ring.util.response :refer [redirect]]))
+            [ring.util.response :refer [redirect]]
+            [org.httpkit.server :refer [run-server]]))
 
 ; State
 
-(def posts (ref {}))
-(def nextId (ref 1))
+(defonce posts (ref {}))
+(defonce nextId (ref 1))
+
+(defn clear-state []
+  (dosync
+    (ref-set posts {})
+    (ref-set nextId 1)))
 
 ; Post form
 
@@ -119,8 +124,8 @@
 
 (def http-handler
   (if is-dev?
-    (reload/wrap-reload (api #'routes))
-    (api routes)))
+    (reload/wrap-reload (site #'routes))
+    (site routes)))
 
 (defn run [& [port]]
   (defonce ^:private server
@@ -128,8 +133,7 @@
       (if is-dev? (start-figwheel))
       (let [port (Integer. (or port (env :port) 10555))]
         (print "Starting web server on port" port ".\n")
-        (run-jetty #'http-handler {:port port
-                          :join? false}))))
+        (run-server http-handler {:port port}))))
   server)
 
 (defn -main [& [port]]
