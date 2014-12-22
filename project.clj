@@ -20,7 +20,6 @@
                  ;; Client
                  [om "0.8.0-beta3"]
                  [sablono "0.2.22"]
-                 [racehub/om-bootstrap "0.3.1"]
 
                  ;; Devel
 
