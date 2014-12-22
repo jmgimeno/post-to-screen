@@ -118,7 +118,7 @@
 
   (GET "/posts/:id" [id] (show-code id))
 
-  #_(GET "/*" req (page))
+  (GET "/*" req (page))
 
   (not-found (show-not-found)))
 
