@@ -5,18 +5,26 @@
 
 (enable-console-print!)
 
-(defonce app-state (atom {:text "Hello Chestnut!"}))
+(defonce app-state (atom {:posts []}))
 
-(defn post-form []
+(defn submit-code [posts e]
+  (let [code (-> js/document
+                 (.getElementById "code")
+                 .-value)]
+    (om/transact! posts #(conj % code))
+    (.preventDefault e)))
+
+(defn post-form [posts]
   (html
-    [:form.form-horizontal {:role "form"}
+    [:form.form-horizontal {:role "form"
+                            :on-submit (partial submit-code posts)}
      [:div.form-group
       [:label.control-label.col-xs-1 {:for "code"} "Code:"]
       [:div.col-xs-10
-       [:textarea.form-control {:rows "15"}]]]
+       [:textarea#code.form-control {:rows "15"}]]]
      [:div.form-group
       [:div.col-xs-offset-1.col-xs-10
-       [:button.btn.btn-primary {:type "submit"} "Post code"]]]]))
+       [:button.btn {:type "submit"} "Post code"]]]]))
 
 (defn tab-view [cursor owner]
   (reify
@@ -30,7 +38,7 @@
         [:div
          [:div.btn-group {:role "toolbar"}
           (map-indexed (fn [i tab]
-                         [(str "button.btn.btn-" (if (= i selected) "primary" "default"))
+                         [(str "button.btn.btn-default" (if (= i selected) ".active" ""))
                           {:type "button"
                            :on-click (fn [_] (om/set-state! owner [:selected] i))}
                           tab])
@@ -38,7 +46,7 @@
          [:hr]
          (case (get tabs selected)
            "Home" [:h2 "Home"]
-           "Post" (post-form))]))))
+           "Post" (post-form (:posts cursor)))]))))
 
 
 (defn application [cursor owner]
@@ -47,7 +55,7 @@
     (render [_]
       (html
         [:div.container
-         [:h1 (:text cursor)]
+         [:h1 "Post to screen"]
          (om/build tab-view cursor)]))))
 
 (defn main []
