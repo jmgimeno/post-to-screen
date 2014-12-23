@@ -23,15 +23,22 @@
   (def chsk-state state)   ; Watchable, read-only atom
   )
 
-(defmulti handle-event (fn [[ev-id ev-data] app owner] ev-id))
+(defmulti handle-event (fn [[tag _] _ _] tag))
 
-(defmethod handle-event :default [[ev-id ev-data :as event] app owner]
-  (print "Received:" event))
+(defmethod handle-event :post-to-screen/code [[_ code] app _]
+  (om/transact! app [:posts] #(conj % code)))
+
+(defmethod handle-event :default [event _ _]
+  #_(print "Received:" event))
 
 (defn event-loop [cursor owner]
   (go-loop []
-           (let [{:keys [event]} (<! ch-chsk)]
-             (handle-event event cursor owner)
+           (let [{:keys [event]} (<! ch-chsk)
+                 [ev-id ev-data] event]
+             (when (vector? ev-data)
+               (case ev-id
+                 :chsk/recv (handle-event ev-data cursor owner)
+                 nil))
              (recur))))
 
 ; UI
@@ -68,7 +75,6 @@
   (let [code (-> js/document
                  (.getElementById "code")
                  .-value)]
-    #_(om/transact! posts #(conj % code))
     (print "Sent: " [:post-to-screen/code code])
     (chsk-send! [:post-to-screen/code code])
     (.preventDefault e)))

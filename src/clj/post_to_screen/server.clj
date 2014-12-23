@@ -23,12 +23,6 @@
   (def connected-uids                connected-uids) ; Watchable, read-only atom
  )
 
-; Post code
-
-(defn post-code [code]
-  ; TODO
-  )
-
 ; UUID and session management
 
 (defn unique-id
@@ -69,16 +63,18 @@
 
   (not-found "These are not the androids that you're looking for."))
 
+; Event handling
+
 (defmulti handle-event (fn [[ev-id ev-data]] ev-id))
 
 (defmethod handle-event :post-to-screen/code [event]
-  (println "Received " event)
+  #_(println "Received " event)
   (doseq [uid (:any @connected-uids)]
-    (println "Sent " event " to " uid)
+    #_(println "Sent " event " to " uid)
     (chsk-send! uid event)))
 
 (defmethod handle-event :default [[ev-id ev-data :as event]]
-  (println "Received:" event))
+  #_(println "Received:" event))
 
 (def http-handler
   (if is-dev?
@@ -90,6 +86,8 @@
            (let [{:keys [event]} (<! ch-chsk)]
              (thread (handle-event event)))
            (recur)))
+
+; Server
 
 (defn run [& [port]]
   (event-loop)
