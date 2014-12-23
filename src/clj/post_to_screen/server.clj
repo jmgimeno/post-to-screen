@@ -71,8 +71,14 @@
 
 (defmulti handle-event (fn [[ev-id ev-data]] ev-id))
 
+(defmethod handle-event :post-to-screen/code [event]
+  (println "Received " event)
+  (doseq [uid (:any @connected-uids)]
+    (println "Sent " event " to " uid)
+    (chsk-send! uid event)))
+
 (defmethod handle-event :default [[ev-id ev-data :as event]]
-  (print "Server:" event))
+  (println "Received:" event))
 
 (def http-handler
   (if is-dev?

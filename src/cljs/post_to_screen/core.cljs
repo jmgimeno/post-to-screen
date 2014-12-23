@@ -26,7 +26,7 @@
 (defmulti handle-event (fn [[ev-id ev-data] app owner] ev-id))
 
 (defmethod handle-event :default [[ev-id ev-data :as event] app owner]
-  (print "Client:" event))
+  (print "Received:" event))
 
 (defn event-loop [cursor owner]
   (go-loop []
@@ -68,7 +68,9 @@
   (let [code (-> js/document
                  (.getElementById "code")
                  .-value)]
-    (om/transact! posts #(conj % code))
+    #_(om/transact! posts #(conj % code))
+    (print "Sent: " [:post-to-screen/code code])
+    (chsk-send! [:post-to-screen/code code])
     (.preventDefault e)))
 
 (defn post-form [posts]

@@ -46,7 +46,8 @@
                                         :optimizations :none
                                         :pretty-print  true}}}}
 
-  :profiles {:dev {:repl-options {:init-ns post-to-screen.server
+  :profiles {:dev {:repl-options {:timeout 60000
+                                  :init-ns post-to-screen.server
                                   :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
 
                    :plugins [[lein-figwheel "0.1.4-SNAPSHOT"]]
