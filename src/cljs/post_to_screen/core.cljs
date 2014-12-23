@@ -1,11 +1,40 @@
 (ns post-to-screen.core
+  (:require-macros [cljs.core.async.macros :as asyncm :refer (go go-loop)])
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
-            [sablono.core :as html :refer-macros [html]]))
+            [sablono.core :as html :refer-macros [html]]
+            [cljs.core.async :as async :refer (<! >! put! chan)]
+            [taoensso.sente  :as sente :refer (cb-success?)]))
 
 (enable-console-print!)
 
-(defonce app-state (atom {:posts []}))
+(defonce app-state (atom {:status :unconnected
+                          :posts []}))
+
+; WebSockets
+
+(let [{:keys [chsk ch-recv send-fn state]}
+      (sente/make-channel-socket! "/chsk" ; Note the same path as before
+                                  {:type :auto ; e/o #{:auto :ajax :ws}
+                                   })]
+  (def chsk       chsk)
+  (def ch-chsk    ch-recv) ; ChannelSocket's receive channel
+  (def chsk-send! send-fn) ; ChannelSocket's send API fn
+  (def chsk-state state)   ; Watchable, read-only atom
+  )
+
+(defmulti handle-event (fn [[ev-id ev-data] app owner] ev-id))
+
+(defmethod handle-event :default [[ev-id ev-data :as event] app owner]
+  (print "Client:" event))
+
+(defn event-loop [cursor owner]
+  (go-loop []
+           (let [{:keys [event]} (<! ch-chsk)]
+             (handle-event event cursor owner)
+             (recur))))
+
+; UI
 
 (defn code-view [posts owner]
   (reify
@@ -14,19 +43,21 @@
       {:selected nil})
     om/IRenderState
     (render-state [_ {:keys [selected]}]
-      (html [:div
-             [:div.col-xs-2
-              [:ul
-               (map-indexed (fn [i post]
-                              (let [pos (- (count posts) i)]
-                                [:li
-                                 {:on-click (fn [_] (om/set-state! owner [:selected] (dec pos)))}
-                                 (str "Code " pos)]))
-                            (reverse posts))]]
-             (when selected
-               [:div.col-xs-10
-                [:pre#codeview
-                 [:code (get posts selected)]]])]))
+      (html
+        [:div
+         [:div.col-xs-1
+          [:ul.list-unstyled
+           (map-indexed
+             (fn [i post]
+               (let [pos (- (count posts) i)]
+                 [:li
+                  {:on-click (fn [_] (om/set-state! owner [:selected] (dec pos)))}
+                  (str "Code " pos)]))
+             (reverse posts))]]
+         (when selected
+           [:div.col-xs-11
+            [:pre#codeview
+             [:code (get posts selected)]]])]))
     om/IDidUpdate
     (did-update [this prev-props prev-state]
       (let [code (-> js/document
@@ -77,6 +108,9 @@
 
 (defn application [cursor owner]
   (reify
+    om/IWillMount
+    (will-mount [_]
+      (event-loop cursor owner))
     om/IRender
     (render [_]
       (html

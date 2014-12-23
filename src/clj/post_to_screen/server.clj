@@ -7,127 +7,86 @@
             [net.cgrand.enlive-html :refer [deftemplate]]
             [ring.middleware.reload :as reload]
             [environ.core :refer [env]]
-            [hiccup.page :as page]
-            [hiccup.form :as form]
-            [hiccup.util :as util]
             [ring.util.response :refer [redirect]]
-            [org.httpkit.server :refer [run-server]]))
+            [org.httpkit.server :refer [run-server]]
+            [taoensso.sente :as sente]
+            [clojure.core.async :as async :refer [<! <!! chan go-loop thread]])
+  (:import [java.util UUID]))
 
-; State
-
-(defonce posts (ref {}))
-(defonce nextId (ref 1))
-
-(defn clear-state []
-  (dosync
-    (ref-set posts {})
-    (ref-set nextId 1)))
-
-; Post form
-
-(defn page-layout [title & body]
-  (page/html5
-    [:head
-     [:meta {:charset "utf-8"}]
-     [:meta {:http-equiv "X-UA-Compatible" :content "IE=edge"}]
-     [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
-     [:title title]
-     (page/include-css "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css")]
-    [:body
-     [:div.container
-      body]
-     (page/include-js "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js")]))
-
-(defn post-form []
-  (page-layout
-    "Post to Screen"
-    [:h1 "Post to Screen"]
-    (form/form-to {:role "form"}
-                  [:post "/posts"]
-                  [:div.form-group
-                   (form/text-area {:class "form-control" :rows 20} "code")]
-                  (form/submit-button {:class "btn btn-primary"} "Post code"))))
-
-; Show code
-
-(defn code-layout [title & body]
-  (page/html5
-    [:head
-     [:meta {:charset "utf-8"}]
-     [:meta {:http-equiv "X-UA-Compatible" :content "IE=edge"}]
-     [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
-     [:title title]
-     (page/include-css "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css")
-     (page/include-css "http://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/zenburn.min.css")
-     (page/include-js "http://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js")]
-    [:body
-     [:script "hljs.initHighlightingOnLoad();"]
-     [:div.container
-      body]
-     (page/include-js "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js")]))
-
-(defn show-code [id]
-  (let [code (get @posts (read-string id))]
-    (if code
-      (code-layout
-        (str "Fragment " id)
-        [:h1 (str "Fragment " id)]
-        [:pre
-         [:code (util/escape-html code)]])
-      (not-found
-        (page-layout
-          "Unexistent fragment"
-          [:div {:class "alert alert-danger" :role "alert"} "Unexistent fragment"])))))
+(let [{:keys [ch-recv send-fn ajax-post-fn ajax-get-or-ws-handshake-fn
+              connected-uids]}
+      (sente/make-channel-socket! {})]
+  (def ring-ajax-post                ajax-post-fn)
+  (def ring-ajax-get-or-ws-handshake ajax-get-or-ws-handshake-fn)
+  (def ch-chsk                       ch-recv) ; ChannelSocket's receive channel
+  (def chsk-send!                    send-fn) ; ChannelSocket's send API fn
+  (def connected-uids                connected-uids) ; Watchable, read-only atom
+ )
 
 ; Post code
 
 (defn post-code [code]
-  (dosync
-    (alter posts assoc @nextId code)
-    (alter nextId inc))
-  (redirect "/"))
+  ; TODO
+  )
 
-; Show list of posts
+; UUID and session management
 
-(defn show-posts []
-  (page-layout
-    "List of fragments"
-    [:h1 "List of fragments"]
-    [:ul
-     (for [k (reverse (sort (keys @posts)))]
-       [:li [:a {:href (str "/posts/" k)} (str "Fragment " k)]])]))
+(defn unique-id
+  "Return a really unique ID (for an unsecured session ID).
+  No, a random number is not unique enough. Use a UUID for real!"
+  []
+  (.toString (UUID/randomUUID)))
 
-; 404 page
-
-(defn show-not-found []
-  (page-layout
-    "Unexistent page"
-    [:div {:class "alert alert-danger" :role "alert"} "Unexistent page"]))
+(defn session-uid
+  "Convenient to extract the UID that Sente needs from the request."
+  [req]
+  (get-in req [:session :uid]))
 
 (deftemplate page
   (io/resource "index.html") [] [:body] (if is-dev? inject-devmode-html identity))
+
+(defn index
+  "Handle index page request. Injects session uid if needed."
+  [req]
+  {:status 200
+   :session (if (session-uid req)
+              (:session req)
+              (assoc (:session req) :uid (unique-id)))
+   :body (page)})
+
+; Application routes
 
 (defroutes routes
   (resources "/")
   (resources "/react" {:root "react"})
 
-  (GET "/" [_] (post-form))
-
-  (GET  "/posts" [_] (show-posts))
   (POST "/posts" [code] (post-code code))
 
-  (GET "/posts/:id" [id] (show-code id))
+  (GET  "/chsk" req (ring-ajax-get-or-ws-handshake req))
+  (POST "/chsk" req (ring-ajax-post                req))
 
-  (GET "/*" req (page))
+  (GET "/" req (#'index req))
 
-  (not-found (show-not-found)))
+  (not-found "These are not the androids that you're looking for."))
+
+(defmulti handle-event (fn [[ev-id ev-data]] ev-id))
+
+(defmethod handle-event :default [[ev-id ev-data :as event]]
+  (print "Server:" event))
 
 (def http-handler
   (if is-dev?
     (reload/wrap-reload (site #'routes))
     (site routes)))
 
+(defn event-loop []
+  (go-loop []
+           (let [{:keys [event]} (<! ch-chsk)]
+             (thread (handle-event event)))
+           (recur)))
+
 (defn run [& [port]]
+  (event-loop)
   (defonce ^:private server
     (do
       (if is-dev? (start-figwheel))
