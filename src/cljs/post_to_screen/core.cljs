@@ -7,6 +7,32 @@
 
 (defonce app-state (atom {:posts []}))
 
+(defn code-view [posts owner]
+  (reify
+    om/IInitState
+    (init-state [_]
+      {:selected nil})
+    om/IRenderState
+    (render-state [_ {:keys [selected]}]
+      (html [:div
+             [:div.col-xs-2
+              [:ul
+               (map-indexed (fn [i post]
+                              (let [pos (- (count posts) i)]
+                                [:li
+                                 {:on-click (fn [_] (om/set-state! owner [:selected] (dec pos)))}
+                                 (str "Code " pos)]))
+                            (reverse posts))]]
+             (when selected
+               [:div.col-xs-10
+                [:pre#codeview
+                 [:code (get posts selected)]]])]))
+    om/IDidUpdate
+    (did-update [this prev-props prev-state]
+      (let [code (-> js/document
+                     (.getElementById "codeview"))]
+        (.highlightBlock js/hljs code)))))
+
 (defn submit-code [posts e]
   (let [code (-> js/document
                  (.getElementById "code")
@@ -45,7 +71,7 @@
                        tabs)]
          [:hr]
          (case (get tabs selected)
-           "Home" [:h2 "Home"]
+           "Home" (om/build code-view (:posts cursor))
            "Post" (post-form (:posts cursor)))]))))
 
 
