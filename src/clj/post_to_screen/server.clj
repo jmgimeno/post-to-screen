@@ -54,8 +54,6 @@
   (resources "/")
   (resources "/react" {:root "react"})
 
-  (POST "/posts" [code] (post-code code))
-
   (GET  "/chsk" req (ring-ajax-get-or-ws-handshake req))
   (POST "/chsk" req (ring-ajax-post                req))
 

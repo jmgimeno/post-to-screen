@@ -52,17 +52,17 @@
     (render-state [_ {:keys [selected]}]
       (html
         [:div
-         [:div.col-xs-1
+         [:div.col-xs-2
           [:ul.list-unstyled
            (map-indexed
              (fn [i post]
                (let [pos (- (count posts) i)]
                  [:li
                   {:on-click (fn [_] (om/set-state! owner [:selected] (dec pos)))}
-                  (str "Code " pos)]))
+                  ((if (= (dec pos) selected) (fn [text] [:strong text]) identity) (str "Code " pos))]))
              (reverse posts))]]
          (when selected
-           [:div.col-xs-11
+           [:div.col-xs-10
             [:pre#codeview
              [:code (get posts selected)]]])]))
     om/IDidUpdate
@@ -95,7 +95,7 @@
   (reify
     om/IInitState
     (init-state [_]
-      {:tabs ["Home" "Post"]
+      {:tabs ["Post" "Show"]
        :selected 0})
     om/IRenderState
     (render-state [_ {:keys [tabs selected]}]
@@ -110,9 +110,8 @@
                        tabs)]
          [:hr]
          (case (get tabs selected)
-           "Home" (om/build code-view (:posts cursor))
-           "Post" (post-form (:posts cursor)))]))))
-
+           "Post" (post-form (:posts cursor))
+           "Show" (om/build code-view (:posts cursor)))]))))
 
 (defn application [cursor owner]
   (reify

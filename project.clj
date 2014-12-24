@@ -1,4 +1,4 @@
-(defproject post-to-screen "0.3.0-SNAPSHOT"
+(defproject post-to-screen "0.4.0-SNAPSHOT"
   :description "Webapp to post code to show on the screen"
   :url "https://github.com/jmgimeno/post-to-screen"
   :license {:name "Eclipse Public License"
