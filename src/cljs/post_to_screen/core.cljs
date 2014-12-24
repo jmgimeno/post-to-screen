@@ -54,17 +54,15 @@
         [:div
          [:div.col-xs-2
           [:ul.list-unstyled
-           (map-indexed
-             (fn [i post]
-               (let [pos (- (count posts) i)]
-                 [:li
-                  {:on-click (fn [_] (om/set-state! owner [:selected] (dec pos)))}
-                  ((if (= (dec pos) selected) (fn [text] [:strong text]) identity) (str "Code " pos))]))
-             (reverse posts))]]
+           (map (fn [i]
+                  [:li
+                   {:on-click (fn [_] (om/set-state! owner [:selected] i))}
+                   ((if (= i selected) (fn [text] [:strong text]) identity) (str "Code " i))])
+                (range (count posts) 0 -1))]]
          (when selected
            [:div.col-xs-10
             [:pre#codeview
-             [:code (get posts selected)]]])]))
+             [:code (get posts (dec selected))]]])]))
     om/IDidUpdate
     (did-update [this prev-props prev-state]
       (let [code (-> js/document
@@ -75,7 +73,7 @@
   (let [code (-> js/document
                  (.getElementById "code")
                  .-value)]
-    (print "Sent: " [:post-to-screen/code code])
+    #_(print "Sent: " [:post-to-screen/code code])
     (chsk-send! [:post-to-screen/code code])
     (.preventDefault e)))
 
