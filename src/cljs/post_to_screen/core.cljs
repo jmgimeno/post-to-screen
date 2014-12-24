@@ -8,7 +8,7 @@
 
 (enable-console-print!)
 
-(defonce app-state (atom {:status :unconnected
+(defonce app-state (atom {:seleced nil
                           :posts []}))
 
 ; WebSockets
@@ -43,31 +43,23 @@
 
 ; UI
 
-(defn code-view [posts owner]
+(defn code-view [{:keys [selected posts] :as cursor} owner]
   (reify
-    om/IInitState
-    (init-state [_]
-      {:selected nil})
-    om/IRenderState
-    (render-state [_ {:keys [selected]}]
+    om/IRender
+    (render [_]
       (html
         [:div
          [:div.col-xs-2
           [:ul.list-unstyled
            (map (fn [i]
                   [:li
-                   {:on-click (fn [_] (om/set-state! owner [:selected] i))}
+                   {:on-click (fn [_] (om/update! cursor [:selected] i))}
                    ((if (= i selected) (fn [text] [:strong text]) identity) (str "Code " i))])
                 (range (count posts) 0 -1))]]
          (when selected
            [:div.col-xs-10
             [:pre#codeview
-             [:code (get posts (dec selected))]]])]))
-    om/IDidUpdate
-    (did-update [this prev-props prev-state]
-      (let [code (-> js/document
-                     (.getElementById "codeview"))]
-        (.highlightBlock js/hljs code)))))
+             [:code (get posts (dec selected))]]])]))))
 
 (defn submit-code [posts e]
   (let [code (-> js/document
@@ -109,7 +101,13 @@
          [:hr]
          (case (get tabs selected)
            "Post" (post-form (:posts cursor))
-           "Show" (om/build code-view (:posts cursor)))]))))
+           "Show" (om/build code-view cursor))]))
+    om/IDidUpdate
+    (did-update [_ _ _]
+      (let [code (-> js/document
+                     (.getElementById "codeview"))]
+        (when code
+          (.highlightBlock js/hljs code))))))
 
 (defn application [cursor owner]
   (reify
