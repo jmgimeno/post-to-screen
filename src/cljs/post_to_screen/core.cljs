@@ -61,18 +61,19 @@
             [:pre#codeview
              [:code (get posts (dec selected))]]])]))))
 
-(defn submit-code [posts e]
+(defn submit-code [owner e]
   (let [code (-> js/document
-                 (.getElementById "code")
-                 .-value)]
+                 (.getElementById "code"))]
     #_(print "Sent: " [:post-to-screen/code code])
-    (chsk-send! [:post-to-screen/code code])
+    (chsk-send! [:post-to-screen/code (.-value code)])
+    (set! (.-value code) "")
+    (om/set-state! owner [:selected] 1)
     (.preventDefault e)))
 
-(defn post-form [posts]
+(defn post-form [owner]
   (html
     [:form.form-horizontal {:role "form"
-                            :on-submit (partial submit-code posts)}
+                            :on-submit (partial submit-code owner)}
      [:div.form-group
       [:label.control-label.col-xs-1 {:for "code"} "Code:"]
       [:div.col-xs-10
@@ -100,7 +101,7 @@
                        tabs)]
          [:hr]
          (case (get tabs selected)
-           "Post" (post-form (:posts cursor))
+           "Post" (post-form owner)
            "Show" (om/build code-view cursor))]))
     om/IDidUpdate
     (did-update [_ _ _]
