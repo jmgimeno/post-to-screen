@@ -43,7 +43,7 @@
                                         :source-map    "resources/public/js/out.js.map"
                                         :preamble      ["react/react.min.js"]
                                         :externs       ["react/externs/react.js"
-                                                        "resources/public/highlightjs/highlight.js"]
+                                                        "externs/highlight-externs.js"]
                                         :optimizations :none
                                         :pretty-print  true}}}}
 
