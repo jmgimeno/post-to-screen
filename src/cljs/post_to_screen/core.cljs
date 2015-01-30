@@ -8,8 +8,9 @@
 
 (enable-console-print!)
 
-(defonce app-state (atom {:seleced nil
-                          :posts []}))
+(defonce app-state (atom {:selected-tab  "Post"
+                          :selected-post 0
+                          :posts         []}))
 
 ; WebSockets
 
@@ -43,7 +44,7 @@
 
 ; UI
 
-(defn code-view [{:keys [selected posts] :as cursor} owner]
+(defn code-view [{:keys [selected-post posts] :as cursor} owner]
   (reify
     om/IRender
     (render [_]
@@ -53,62 +54,66 @@
           [:ul.list-unstyled
            (map (fn [i]
                   [:li
-                   {:on-click (fn [_] (om/update! cursor [:selected] i))}
-                   ((if (= i selected) (fn [text] [:strong text]) identity) (str "Code " i))])
-                (range (count posts) 0 -1))]]
-         (when selected
+                   {:on-click (fn [_] (om/update! cursor [:selected-post] i))}
+                   ((if (= i selected-post) (fn [text] [:strong text]) identity) (str "Code " (inc i)))])
+                (reverse (range (count posts))))]]
+         (when (seq posts)
            [:div.col-xs-10
             [:pre#codeview
-             [:code (get posts (dec selected))]]])]))))
+             [:code (get posts selected-post)]]])]))
+    om/IDidUpdate
+    (did-update [_ _ _]
+      (let [codeview (-> js/document
+                         (.getElementById "codeview"))]
+        (.highlightBlock js/hljs codeview)))))
 
-(defn submit-code [owner e]
+(defn submit-code [cursor e]
   (let [code (-> js/document
                  (.getElementById "code"))]
     #_(print "Sent: " [:post-to-screen/code code])
     (chsk-send! [:post-to-screen/code (.-value code)])
     (set! (.-value code) "")
-    (om/set-state! owner [:selected] 1)
+    (om/update! cursor [:selected-tab] "Show")
     (.preventDefault e)))
 
-(defn post-form [owner]
-  (html
-    [:form.form-horizontal {:role "form"
-                            :on-submit (partial submit-code owner)}
-     [:div.form-group
-      [:label.control-label.col-xs-1 {:for "code"} "Code:"]
-      [:div.col-xs-10
-       [:textarea#code.form-control {:rows "15"}]]]
-     [:div.form-group
-      [:div.col-xs-offset-1.col-xs-10
-       [:button.btn {:type "submit"} "Post code"]]]]))
-
-(defn tab-view [cursor owner]
+(defn post-form [cursor owner]
   (reify
-    om/IInitState
-    (init-state [_]
-      {:tabs ["Post" "Show"]
-       :selected 0})
-    om/IRenderState
-    (render-state [_ {:keys [tabs selected]}]
+    om/IRender
+    (render [_]
       (html
-        [:div
-         [:div.btn-group {:role "toolbar"}
-          (map-indexed (fn [i tab]
-                         [(str "button.btn.btn-default" (if (= i selected) ".active" ""))
-                          {:type "button"
-                           :on-click (fn [_] (om/set-state! owner [:selected] i))}
-                          tab])
-                       tabs)]
-         [:hr]
-         (case (get tabs selected)
-           "Post" (post-form owner)
-           "Show" (om/build code-view cursor))]))
-    om/IDidUpdate
-    (did-update [_ _ _]
-      (let [code (-> js/document
-                     (.getElementById "codeview"))]
-        (when code
-          (.highlightBlock js/hljs code))))))
+        [:form.form-horizontal {:role      "form"
+                                :on-submit (partial submit-code cursor)}
+         [:div.form-group
+          [:label.control-label.col-xs-1 {:for "code"} "Code:"]
+          [:div.col-xs-10
+           [:textarea#code.form-control {:rows "15"}]]]
+         [:div.form-group
+          [:div.col-xs-offset-1.col-xs-10
+           [:button.btn {:type "submit"} "Post code"]]]]))
+    om/IDidMount
+    (did-mount [_]
+      (-> js/document
+          (.getElementById "code")
+          .focus))))
+
+(defn tab-view [{:keys [selected-tab] :as cursor} owner]
+  (reify
+    om/IRender
+    (render [_]
+      (let [tabs ["Post" "Show"]]
+        (html
+          [:div
+           [:div.btn-group {:role "toolbar"}
+            (map-indexed (fn [i tab]
+                           [(str "button.btn.btn-default" (if (= tab selected-tab) ".active" ""))
+                            {:type     "button"
+                             :on-click (fn [_] (om/update! cursor [:selected-tab] tab))}
+                            tab])
+                         tabs)]
+           [:hr]
+           (case selected-tab
+             "Post" (om/build post-form cursor)
+             "Show" (om/build code-view cursor))])))))
 
 (defn application [cursor owner]
   (reify
