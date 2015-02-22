@@ -1,8 +1,6 @@
 (ns post-to-screen.core
   (:require-macros [cljs.core.async.macros :as asyncm :refer (go go-loop)])
-  (:require [om.core :as om :include-macros true]
-            [om.dom :as dom :include-macros true]
-            [sablono.core :as html :refer-macros [html]]
+  (:require [reagent.core :as reagent :refer [atom]]
             [cljs.core.async :as async :refer (<! >! put! chan)]
             [taoensso.sente  :as sente :refer (cb-success?)]))
 
@@ -24,111 +22,105 @@
   (def chsk-state state)   ; Watchable, read-only atom
   )
 
-(defmulti handle-event (fn [[tag _] _ _] tag))
+(defmulti handle-event (fn [[tag _] _] tag))
 
-(defmethod handle-event :post-to-screen/code [[_ code] app _]
-  (om/transact! app [:posts] #(conj % code)))
+(defmethod handle-event :post-to-screen/code [[_ code] state]
+  (swap! state update-in [:posts] #(conj % {:key (count %) :code code})))
 
 (defmethod handle-event :default [event _ _]
   #_(print "Received:" event))
 
-(defn event-loop [cursor owner]
+(defn event-loop [data]
   (go-loop []
            (let [{:keys [event]} (<! ch-chsk)
                  [ev-id ev-data] event]
              (when (vector? ev-data)
                (case ev-id
-                 :chsk/recv (handle-event ev-data cursor owner)
+                 :chsk/recv (handle-event ev-data data)
                  nil))
              (recur))))
 
 ; UI
 
-(defn code-view [{:keys [selected-post posts] :as cursor} owner]
-  (reify
-    om/IRender
-    (render [_]
-      (html
-        [:div
-         [:div.col-xs-2
-          [:ul.list-unstyled
-           (map (fn [i]
-                  [:li
-                   {:on-click (fn [_] (om/update! cursor [:selected-post] i))}
-                   ((if (= i selected-post) (fn [text] [:strong text]) identity) (str "Code " (inc i)))])
-                (reverse (range (count posts))))]]
-         (when (seq posts)
-           [:div.col-xs-10
-            [:pre#codeview
-             [:code (get posts selected-post)]]])]))
-    om/IDidUpdate
-    (did-update [_ _ _]
-      (let [codeview (-> js/document
-                         (.getElementById "codeview"))]
-        (.highlightBlock js/hljs codeview)))))
+(defn code-view [data]
+  (let [{:keys [selected-post posts]} @data]
+    [:div
+     [:div.col-xs-2
+      [:ul.list-unstyled
+       (map (fn [{key :key}]
+              ^{:key key}
+              [:li
+               {:on-click (fn [_] (swap! data assoc :selected-post key))}
+               ((if (= key selected-post) (fn [text] [:strong text]) identity) (str "Code " (inc key)))])
+            (reverse posts))]]
+     (when (seq posts)
+       [:div.col-xs-10
+        [:pre#codeview
+         [:code (get-in posts [selected-post :code])]]])]))
 
-(defn submit-code [cursor e]
+(def code-view
+  (with-meta code-view
+             {:component-did-update
+              (fn [_ _]
+                (let [codeview (-> js/document
+                                   (.getElementById "codeview"))]
+                  (.highlightBlock js/hljs codeview)))}))
+
+(defn submit-code [data e]
   (let [code (-> js/document
                  (.getElementById "code"))]
     #_(print "Sent: " [:post-to-screen/code code])
     (chsk-send! [:post-to-screen/code (.-value code)])
     (set! (.-value code) "")
-    (om/update! cursor [:selected-tab] "Show")
+    (swap! data assoc :selected-tab "Show")
     (.preventDefault e)))
 
-(defn post-form [cursor owner]
-  (reify
-    om/IRender
-    (render [_]
-      (html
-        [:form.form-horizontal {:role      "form"
-                                :on-submit (partial submit-code cursor)}
-         [:div.form-group
-          [:label.control-label.col-xs-1 {:for "code"} "Code:"]
-          [:div.col-xs-10
-           [:textarea#code.form-control {:rows "15"}]]]
-         [:div.form-group
-          [:div.col-xs-offset-1.col-xs-10
-           [:button.btn {:type "submit"} "Post code"]]]]))
-    om/IDidMount
-    (did-mount [_]
-      (-> js/document
-          (.getElementById "code")
-          .focus))))
+(defn post-form [data]
+  [:form.form-horizontal {:role      "form"
+                          :on-submit (partial submit-code data)}
+   [:div.form-group
+    [:label.control-label.col-xs-1 {:for "code"} "Code:"]
+    [:div.col-xs-10
+     [:textarea#code.form-control {:rows "15"}]]]
+   [:div.form-group
+    [:div.col-xs-offset-1.col-xs-10
+     [:button.btn {:type "submit"} "Post code"]]]])
 
-(defn tab-view [{:keys [selected-tab] :as cursor} owner]
-  (reify
-    om/IRender
-    (render [_]
-      (let [tabs ["Post" "Show"]]
-        (html
-          [:div
-           [:div.btn-group {:role "toolbar"}
-            (map-indexed (fn [i tab]
-                           [(str "button.btn.btn-default" (if (= tab selected-tab) ".active" ""))
-                            {:type     "button"
-                             :on-click (fn [_] (om/update! cursor [:selected-tab] tab))}
-                            tab])
-                         tabs)]
-           [:hr]
-           (case selected-tab
-             "Post" (om/build post-form cursor)
-             "Show" (om/build code-view cursor))])))))
+(def post-form
+  (with-meta post-form
+             {:component-did-mount
+              (fn [_]
+                (-> js/document
+                    (.getElementById "code")
+                    .focus))}))
 
-(defn application [cursor owner]
-  (reify
-    om/IWillMount
-    (will-mount [_]
-      (event-loop cursor owner))
-    om/IRender
-    (render [_]
-      (html
-        [:div.container
-         [:h1 "Post to screen"]
-         (om/build tab-view cursor)]))))
+(defn tab-view [data]
+  (let [tabs ["Post" "Show"]
+        selected-tab (:selected-tab @data)]
+    [:div
+     [:div.btn-group {:role "toolbar"}
+      (map-indexed (fn [i tab]
+                     ^{:key i}
+                     [(str "button.btn.btn-default" (if (= tab selected-tab) ".active" ""))
+                      {:type     "button"
+                       :on-click (fn [_] (swap! data assoc :selected-tab tab))}
+                      tab])
+                   tabs)]
+     [:hr]
+     (case selected-tab
+       "Post" [post-form data]
+       "Show" [code-view data])]))
+
+(defn application [data]
+  [:div.container
+   [:h1 "Post to screen"]
+   [tab-view data]])
 
 (defn main []
-  (om/root
-    application
-    app-state
-    {:target (. js/document (getElementById "app"))}))
+  (let [data (atom {:selected-tab  "Post"
+                    :selected-post 0
+                    :posts         []})]
+    (event-loop data)
+    (reagent/render-component
+      [application data]
+      (. js/document (getElementById "app")))))
