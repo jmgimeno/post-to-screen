@@ -81,7 +81,7 @@
    [:div.form-group
     [:label.control-label.col-xs-1 {:for "code"} "Code:"]
     [:div.col-xs-10
-     [:textarea#code.form-control {:rows "15"}]]]
+     [:textarea#code.form-control {:rows "20"}]]]
    [:div.form-group
     [:div.col-xs-offset-1.col-xs-10
      [:button.btn {:type "submit"} "Post code"]]]])
@@ -94,27 +94,35 @@
                     (.getElementById "code")
                     .focus))}))
 
-(defn tab-view [data]
-  (let [tabs ["Post" "Show"]
-        selected-tab (:selected-tab @data)]
+(defn navigation-bar [data]
+  [:nav.navbar.navbar-default
+   [:div.container-fluid
+    [:div.navbar-header
+     [:a.navbar-brand {:href "#"} "Post to Screen"]]
     [:div
-     [:div.btn-group {:role "toolbar"}
-      (map-indexed (fn [i tab]
-                     ^{:key i}
-                     [(str "button.btn.btn-default" (if (= tab selected-tab) ".active" ""))
-                      {:type     "button"
-                       :on-click (fn [_] (swap! data assoc :selected-tab tab))}
-                      tab])
-                   tabs)]
-     [:hr]
-     (case selected-tab
-       "Post" [post-form data]
-       "Show" [code-view data])]))
+     [:ul.nav.navbar-nav
+      [:li (when (= "Post" (:selected-tab @data)) {:class "active"})
+       [:a {:on-click (fn [e]
+                          (swap! data assoc :selected-tab "Post")
+                          (.preventDefault e))} "Post"]]
+      [:li (when (= "Show" (:selected-tab @data)) {:class "active"})
+       [:a {:on-click (fn [e]
+                          (swap! data assoc :selected-tab "Show")
+                          (.preventDefault e))} "Show"]]]
+     [:ul.nav.navbar-nav.navbar-right
+      [:li
+       [:a {:href "https://github.com/jmgimeno/post-to-screen" :target "_blank"}
+        "GitHub"]]]]]])
+
+(defn main-view [data]
+      (case (:selected-tab @data)
+            "Post" [post-form data]
+            "Show" [code-view data]))
 
 (defn application [data]
-  [:div.container
-   [:h1 "Post to screen"]
-   [tab-view data]])
+      [:div
+       [navigation-bar data]
+       [main-view data]])
 
 (defn main []
   (let [data (atom {:selected-tab  "Post"
