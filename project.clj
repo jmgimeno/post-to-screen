@@ -6,30 +6,30 @@
 
   :source-paths ["src/clj" "src/cljs"]
 
-  :dependencies [[org.clojure/clojure "1.7.0-alpha5"]
-                 [org.clojure/clojurescript "0.0-2850" :scope "provided"]
-                 [leiningen "2.5.0"]
+  :dependencies [[org.clojure/clojure "1.7.0"]
+                 [org.clojure/clojurescript "0.0-3308" :scope "provided"]
+                 [leiningen "2.5.1"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
-                 [com.taoensso/sente "1.2.0"]
+                 [com.taoensso/sente "1.5.0"]
 
                  ;; Server
-                 [ring "1.3.1"]
-                 [compojure "1.2.0"]
+                 [ring "1.4.0"]
+                 [compojure "1.3.4"]
                  [hiccup "1.0.5"]
-                 [http-kit "2.1.16"]
+                 [http-kit "2.1.19"]
                  [environ "1.0.0"]
 
                  ;; Client
-                 [reagent "0.5.0-alpha3"]
+                 [reagent "0.5.0"]
 
                  ;; Devel
 
                  [enlive "1.1.5"]
-                 [figwheel "0.2.1-SNAPSHOT"]
-                 [com.cemerick/piggieback "0.1.4"]
-                 [weasel "0.6.0"]]
+                 [figwheel "0.3.7"]
+                 [com.cemerick/piggieback "0.2.1"]
+                 [weasel "0.7.0"]]
 
-  :plugins [[lein-cljsbuild "1.0.3"]
+  :plugins [[lein-cljsbuild "1.0.6"]
             [lein-environ "1.0.0"]]
 
   :min-lein-version "2.5.0"
@@ -48,11 +48,14 @@
                                   :init-ns post-to-screen.server
                                   :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
 
-                   :plugins [[lein-figwheel "0.2.1-SNAPSHOT"]]
+                   :dependencies [[org.clojure/tools.nrepl "0.2.10"]]
+
+                   :plugins [[lein-figwheel "0.3.7"]]
 
                    :figwheel {:http-server-root "public"
                               :port 3449
-                              :css-dirs ["resources/public/css"]}
+                              :css-dirs ["resources/public/css"]
+                              :repl false}
 
                    :env {:is-dev true}
 

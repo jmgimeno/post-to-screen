@@ -10,12 +10,13 @@
             [ring.util.response :refer [redirect]]
             [org.httpkit.server :refer [run-server]]
             [taoensso.sente :as sente]
+            [taoensso.sente.server-adapters.http-kit :refer (sente-web-server-adapter)]
             [clojure.core.async :as async :refer [<! <!! chan go-loop thread]])
   (:import [java.util UUID]))
 
 (let [{:keys [ch-recv send-fn ajax-post-fn ajax-get-or-ws-handshake-fn
               connected-uids]}
-      (sente/make-channel-socket! {})]
+      (sente/make-channel-socket! sente-web-server-adapter {})]
   (def ring-ajax-post                ajax-post-fn)
   (def ring-ajax-get-or-ws-handshake ajax-get-or-ws-handshake-fn)
   (def ch-chsk                       ch-recv) ; ChannelSocket's receive channel
