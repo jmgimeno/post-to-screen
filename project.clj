@@ -27,7 +27,8 @@
                  [enlive "1.1.5"]
                  [figwheel "0.3.7"]
                  [com.cemerick/piggieback "0.2.1"]
-                 [weasel "0.7.0"]]
+                 [weasel "0.7.0"]
+                 [org.clojure/tools.nrepl "0.2.10"]]
 
   :plugins [[lein-cljsbuild "1.0.6"]
             [lein-environ "1.0.0"]]
@@ -47,8 +48,6 @@
   :profiles {:dev {:repl-options {:timeout 60000
                                   :init-ns post-to-screen.server
                                   :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
-
-                   :dependencies [[org.clojure/tools.nrepl "0.2.10"]]
 
                    :plugins [[lein-figwheel "0.3.7"]]
 
