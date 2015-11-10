@@ -8,30 +8,30 @@
 
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [org.clojure/clojurescript "0.0-3308" :scope "provided"]
-                 [leiningen "2.5.1"]
-                 [org.clojure/core.async "0.1.346.0-17112a-alpha"]
-                 [com.taoensso/sente "1.5.0"]
+                 [leiningen "2.5.3"]
+                 [org.clojure/core.async "0.2.371"]
+                 [com.taoensso/sente "1.6.0"]
 
                  ;; Server
                  [ring "1.4.0"]
-                 [compojure "1.3.4"]
+                 [compojure "1.4.0"]
                  [hiccup "1.0.5"]
                  [http-kit "2.1.19"]
-                 [environ "1.0.0"]
+                 [environ "1.0.1"]
 
                  ;; Client
-                 [reagent "0.5.0"]
+                 [reagent "0.5.1"]
 
                  ;; Devel
 
-                 [enlive "1.1.5"]
-                 [figwheel "0.3.7"]
+                 [enlive "1.1.6"]
+                 [figwheel "0.4.1"]
                  [com.cemerick/piggieback "0.2.1"]
                  [weasel "0.7.0"]
-                 [org.clojure/tools.nrepl "0.2.10"]]
+                 [org.clojure/tools.nrepl "0.2.12"]]
 
-  :plugins [[lein-cljsbuild "1.0.6"]
-            [lein-environ "1.0.0"]]
+  :plugins [[lein-cljsbuild "1.1.1"]
+            [lein-environ "1.0.1"]]
 
   :min-lein-version "2.5.0"
 
