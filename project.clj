@@ -7,17 +7,17 @@
   :source-paths ["src/clj" "src/cljs"]
 
   :dependencies [[org.clojure/clojure "1.7.0"]
-                 [org.clojure/clojurescript "0.0-3308" :scope "provided"]
-                 [leiningen "2.5.3"]
-                 [org.clojure/core.async "0.2.371"]
-                 [com.taoensso/sente "1.6.0"]
+                 [org.clojure/clojurescript "1.7.228" :scope "provided"]
+                 [leiningen "2.6.0"]
+                 [org.clojure/core.async "0.2.374"]
+                 [com.taoensso/sente "1.7.0"]
 
                  ;; Server
                  [ring "1.4.0"]
                  [compojure "1.4.0"]
                  [hiccup "1.0.5"]
                  [http-kit "2.1.19"]
-                 [environ "1.0.1"]
+                 [environ "1.0.2"]
 
                  ;; Client
                  [reagent "0.5.1"]
@@ -25,13 +25,13 @@
                  ;; Devel
 
                  [enlive "1.1.6"]
-                 [figwheel "0.4.1"]
+                 [figwheel-sidecar "0.5.0-6"]
                  [com.cemerick/piggieback "0.2.1"]
                  [weasel "0.7.0"]
                  [org.clojure/tools.nrepl "0.2.12"]]
 
   :plugins [[lein-cljsbuild "1.1.1"]
-            [lein-environ "1.0.1"]]
+            [lein-environ "1.0.2"]]
 
   :min-lein-version "2.5.0"
 
@@ -49,7 +49,7 @@
                                   :init-ns post-to-screen.server
                                   :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
 
-                   :plugins [[lein-figwheel "0.3.7"]]
+                   :plugins [[lein-figwheel "0.5.0-6"]]
 
                    :figwheel {:http-server-root "public"
                               :port 3449
