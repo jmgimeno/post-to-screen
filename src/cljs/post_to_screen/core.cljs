@@ -44,8 +44,8 @@
 
 (defn code-view [data]
   (let [{:keys [selected-post posts]} @data]
-    [:div
-     [:div.col-xs-2
+    [:div.row
+     [:div.col-md-1
       [:ul.list-unstyled
        (map (fn [{key :key}]
               ^{:key key}
@@ -54,7 +54,7 @@
                ((if (= key selected-post) (fn [text] [:strong text]) identity) (str "Code " (inc key)))])
             (reverse posts))]]
      (when (seq posts)
-       [:div.col-xs-10
+       [:div.col-md-10
         [:pre#codeview
          [:code (get-in posts [selected-post :code])]]])]))
 
@@ -79,11 +79,11 @@
   [:form.form-horizontal {:role      "form"
                           :on-submit (partial submit-code data)}
    [:div.form-group
-    [:label.control-label.col-xs-1 {:for "code"} "Code:"]
-    [:div.col-xs-10
+    [:label.control-label.col-md-1 {:for "code"} "Code:"]
+    [:div.col-md-10
      [:textarea#code.form-control {:rows "20"}]]]
    [:div.form-group
-    [:div.col-xs-offset-1.col-xs-10
+    [:div.col-md-offset-1.col-md-10
      [:button.btn {:type "submit"} "Post code"]]]])
 
 (def post-form
@@ -96,23 +96,22 @@
 
 (defn navigation-bar [data]
   [:nav.navbar.navbar-default
-   [:div.container-fluid
-    [:div.navbar-header
-     [:a.navbar-brand {:href "#"} "Post to Screen"]]
-    [:div
-     [:ul.nav.navbar-nav
-      [:li (when (= "Post" (:selected-tab @data)) {:class "active"})
-       [:a {:on-click (fn [e]
-                          (swap! data assoc :selected-tab "Post")
-                          (.preventDefault e))} "Post"]]
-      [:li (when (= "Show" (:selected-tab @data)) {:class "active"})
-       [:a {:on-click (fn [e]
-                          (swap! data assoc :selected-tab "Show")
-                          (.preventDefault e))} "Show"]]]
-     [:ul.nav.navbar-nav.navbar-right
-      [:li
-       [:a {:href "https://github.com/jmgimeno/post-to-screen" :target "_blank"}
-        "GitHub"]]]]]])
+   [:div.navbar-header
+    [:a.navbar-brand {:href "#"} "Post to Screen"]]
+   [:div
+    [:ul.nav.navbar-nav
+     [:li (when (= "Post" (:selected-tab @data)) {:class "active"})
+      [:a {:on-click (fn [e]
+                       (swap! data assoc :selected-tab "Post")
+                       (.preventDefault e))} "Post"]]
+     [:li (when (= "Show" (:selected-tab @data)) {:class "active"})
+      [:a {:on-click (fn [e]
+                       (swap! data assoc :selected-tab "Show")
+                       (.preventDefault e))} "Show"]]]
+    [:ul.nav.navbar-nav.navbar-right
+     [:li
+      [:a {:href "https://github.com/jmgimeno/post-to-screen" :target "_blank"}
+       "GitHub"]]]]])
 
 (defn main-view [data]
       (case (:selected-tab @data)
@@ -120,7 +119,7 @@
             "Show" [code-view data]))
 
 (defn application [data]
-      [:div
+      [:div.container-fluid
        [navigation-bar data]
        [main-view data]])
 
