@@ -1,18 +1,17 @@
 (ns post-to-screen.server
   (:require [clojure.java.io :as io]
-            [post-to-screen.dev :refer [is-dev? inject-devmode-html browser-repl start-figwheel]]
-            [compojure.core :refer [GET POST defroutes]]
+            [compojure.core :refer [ANY GET PUT POST DELETE defroutes]]
             [compojure.route :refer [resources not-found]]
-            [compojure.handler :refer [site]]
-            [net.cgrand.enlive-html :refer [deftemplate]]
-            [ring.middleware.reload :as reload]
+            [ring.middleware.defaults :refer [wrap-defaults api-defaults]]
+            [ring.middleware.gzip :refer [wrap-gzip]]
+            [ring.middleware.logger :refer [wrap-with-logger]]
             [environ.core :refer [env]]
-            [ring.util.response :refer [redirect]]
             [org.httpkit.server :refer [run-server]]
             [taoensso.sente :as sente]
             [taoensso.sente.server-adapters.http-kit :refer (sente-web-server-adapter)]
             [clojure.core.async :as async :refer [<! <!! chan go-loop thread]])
-  (:import [java.util UUID]))
+  (:import [java.util UUID])
+  (:gen-class))
 
 (let [{:keys [ch-recv send-fn ajax-post-fn ajax-get-or-ws-handshake-fn
               connected-uids]}
@@ -22,45 +21,7 @@
   (def ch-chsk                       ch-recv) ; ChannelSocket's receive channel
   (def chsk-send!                    send-fn) ; ChannelSocket's send API fn
   (def connected-uids                connected-uids) ; Watchable, read-only atom
- )
-
-; UUID and session management
-
-(defn unique-id
-  "Return a really unique ID (for an unsecured session ID).
-  No, a random number is not unique enough. Use a UUID for real!"
-  []
-  (.toString (UUID/randomUUID)))
-
-(defn session-uid
-  "Convenient to extract the UID that Sente needs from the request."
-  [req]
-  (get-in req [:session :uid]))
-
-(deftemplate page
-  (io/resource "index.html") [] [:body] (if is-dev? inject-devmode-html identity))
-
-(defn index
-  "Handle index page request. Injects session uid if needed."
-  [req]
-  {:status 200
-   :session (if (session-uid req)
-              (:session req)
-              (assoc (:session req) :uid (unique-id)))
-   :body (page)})
-
-; Application routes
-
-(defroutes routes
-  (resources "/")
-  (resources "/react" {:root "react"})
-
-  (GET  "/chsk" req (ring-ajax-get-or-ws-handshake req))
-  (POST "/chsk" req (ring-ajax-post                req))
-
-  (GET "/" req (#'index req))
-
-  (not-found "These are not the androids that you're looking for."))
+  )
 
 ; Event handling
 
@@ -75,28 +36,55 @@
 (defmethod handle-event :default [[ev-id ev-data :as event]]
   #_(println "Received:" event))
 
-(def http-handler
-  (if is-dev?
-    (reload/wrap-reload (site #'routes))
-    (site routes)))
-
 (defn event-loop []
   (go-loop []
-           (let [{:keys [event]} (<! ch-chsk)]
-             (thread (handle-event event)))
-           (recur)))
+    (let [{:keys [event]} (<! ch-chsk)]
+      (thread (handle-event event)))
+    (recur)))
 
-; Server
+; UUID and session management
 
-(defn run [& [port]]
-  (event-loop)
-  (defonce ^:private server
-    (do
-      (if is-dev? (start-figwheel))
-      (let [port (Integer. (or port (env :port) 10555))]
-        (print "Starting web server on port" port ".\n")
-        (run-server http-handler {:port port}))))
-  server)
+(defn unique-id
+  "Return a really unique ID (for an unsecured session ID).
+  No, a random number is not unique enough. Use a UUID for real!"
+  []
+  (.toString (UUID/randomUUID)))
+
+(defn session-uid
+  "Convenient to extract the UID that Sente needs from the request."
+  [req]
+  (get-in req [:session :uid]))
+
+(defn index
+  "Handle index page request. Injects session uid if needed."
+  [req]
+  {:status 200
+   :headers {"Content-Type" "text/html; charset=utf-8"}
+   :session (if (session-uid req)
+              (:session req)
+              (assoc (:session req) :uid (unique-id)))
+   :body (io/input-stream (io/resource "public/index.html"))})
+
+; Application routes
+
+(defroutes routes
+  (resources "/")
+  (resources "/react" {:root "react"})
+
+  (GET  "/chsk" req (ring-ajax-get-or-ws-handshake req))
+  (POST "/chsk" req (ring-ajax-post                req))
+
+  (GET "/" req (#'index req))
+
+  (not-found "These are not the androids that you're looking for."))
+
+(def http-handler
+  (-> routes
+      (wrap-defaults api-defaults)
+      wrap-with-logger
+      wrap-gzip))
 
 (defn -main [& [port]]
-  (run port))
+  (let [port (Integer. (or port (env :port) 10555))]
+    (event-loop)
+    (run-server http-handler {:port port :join? false})))

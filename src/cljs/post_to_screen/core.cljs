@@ -25,10 +25,11 @@
 (defmulti handle-event (fn [[tag _] _] tag))
 
 (defmethod handle-event :post-to-screen/code [[_ code] state]
+  #_(println "Code received")
   (swap! state update-in [:posts] #(conj % {:key (count %) :code code})))
 
 (defmethod handle-event :default [event _ _]
-  #_(print "Received:" event))
+  #_(println "Received:" event))
 
 (defn event-loop [data]
   (go-loop []
@@ -58,13 +59,18 @@
         [:pre#codeview
          [:code (get-in posts [selected-post :code])]]])]))
 
+(defn colorize-code []
+  (let [codeview (-> js/document
+                     (.getElementById "codeview"))]
+    (.highlightBlock js/hljs codeview)))
+
 (def code-view
   (with-meta code-view
-             {:component-did-update
-              (fn [_ _]
-                (let [codeview (-> js/document
-                                   (.getElementById "codeview"))]
-                  (.highlightBlock js/hljs codeview)))}))
+             {:component-did-mount
+              (fn [_] (colorize-code))
+
+              :component-did-update
+              (fn [_ _] (colorize-code))}))
 
 (defn submit-code [data e]
   (let [code (-> js/document
@@ -114,14 +120,14 @@
        "GitHub"]]]]])
 
 (defn main-view [data]
-      (case (:selected-tab @data)
-            "Post" [post-form data]
-            "Show" [code-view data]))
+  (case (:selected-tab @data)
+    "Post" [post-form data]
+    "Show" [code-view data]))
 
 (defn application [data]
-      [:div.container-fluid
-       [navigation-bar data]
-       [main-view data]])
+  [:div.container-fluid
+   [navigation-bar data]
+   [main-view data]])
 
 (defn main []
   (let [data (atom {:selected-tab  "Post"
@@ -131,3 +137,5 @@
     (reagent/render-component
       [application data]
       (. js/document (getElementById "app")))))
+
+(main)
