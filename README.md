@@ -1,6 +1,5 @@
 # post-to-screen
 
-
 ## Development
 
 Open a terminal and type `lein repl` to start a Clojure REPL
