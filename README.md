@@ -94,6 +94,16 @@ git push heroku master:master
 heroku open
 ```
 
+## Deploy to railway
+
+```sh
+railway login
+railway link
+railway up
+```
+
+TODO: Clean de Dockerfile.
+
 ## Running with Foreman
 
 Heroku uses [Foreman](http://ddollar.github.io/foreman/) to run your
