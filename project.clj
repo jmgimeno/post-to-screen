@@ -4,23 +4,23 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
 
-  :dependencies [[org.clojure/clojure "1.8.0"]
-                 [org.clojure/clojurescript "1.7.228" :scope "provided"]
-                 [ring "1.4.0"]
-                 [ring/ring-defaults "0.1.5"]
-                 [bk/ring-gzip "0.1.1"]
+  :dependencies [[org.clojure/clojure "1.11.1"]
+                 [org.clojure/clojurescript "1.11.60"]
+                 [ring "1.9.6"]
+                 [ring/ring-defaults "0.3.3"]
+                 [amalloy/ring-gzip-middleware "0.1.4"]
                  [ring.middleware.logger "0.5.0"]
-                 [compojure "1.4.0"]
-                 [environ "1.0.2"]
-                 [http-kit "2.1.19"]
-                 [org.clojure/core.async "0.2.374"]
-                 [com.taoensso/sente "1.7.0"]
+                 [compojure "1.7.0"]
+                 [environ "1.2.0"]
+                 [http-kit "2.6.0"]
+                 [org.clojure/core.async "1.5.648"]
+                 [com.taoensso/sente "1.17.0"]
                  [hiccup "1.0.5"]
-                 [reagent "0.5.1"]
-                 [cljsjs/highlight "8.4-0"]]
+                 [reagent "1.1.1"]
+                 [cljsjs/highlight "11.5.1-0"]]
 
-  :plugins [[lein-cljsbuild "1.1.1"]
-            [lein-environ "1.0.1"]]
+  :plugins [[lein-cljsbuild "1.1.8"]
+            [lein-environ "1.2.0"]]
 
   :min-lein-version "2.5.3"
 
@@ -91,13 +91,13 @@
   :doo {:build "test"}
 
   :profiles {:dev
-             {:dependencies [[figwheel "0.5.0-6"]
-                             [figwheel-sidecar "0.5.0-6"]
+             {:dependencies [[figwheel "0.5.20"]
+                             [figwheel-sidecar "0.5.20"]
                              [com.cemerick/piggieback "0.2.1"]
                              [org.clojure/tools.nrepl "0.2.12"]]
 
-              :plugins [[lein-figwheel "0.5.0-6"]
-                        [lein-doo "0.1.6"]]
+              :plugins [[lein-figwheel "0.5.20"]
+                        [lein-doo "0.1.11"]]
 
               :cljsbuild {:builds
                           {:test
