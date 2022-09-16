@@ -1,14 +1,10 @@
-FROM openjdk:8
+FROM openjdk:17-jdk-slim
 
-RUN apt-get -y update && \
-    apt-get -y install leiningen 
+WORKDIR /home/app
 
-COPY . /app
-
-WORKDIR /app
-
-RUN lein uberjar
+ADD ./target/*standalone.jar ./post-to-screen.jar
 
 EXPOSE 10555
 
-CMD java $JVM_OPTS -cp /app/target/post-to-screen.jar clojure.main -m post-to-screen.server
+CMD java $JAVA_OPTS -jar post-to-screen.jar
+
