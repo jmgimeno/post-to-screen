@@ -28,3 +28,10 @@ docker build -t post-to-screen .
 ```shell
 docker run --detach --publish 8000:10555 --name post-to-screen-1 post-to-screen
 ````
+
+## To Deploy
+
+* The `Dockerfile` used to deploy to fly.io does not work
+* But the nixpacks used on the web work
+* But an alternative `Dockerfile` does work instead
+
