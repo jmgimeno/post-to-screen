@@ -9,6 +9,7 @@
                  [ring "1.9.6"]
                  [ring/ring-defaults "0.3.3"]
                  [bk/ring-gzip "0.3.0"]
+                 [ring-logger "1.1.1"]
                  [compojure "1.7.0"]
                  [environ "1.2.0"]
                  [http-kit "2.6.0"]

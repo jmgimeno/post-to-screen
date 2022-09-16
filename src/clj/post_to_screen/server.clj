@@ -4,6 +4,7 @@
             [compojure.route :refer [resources not-found]]
             [ring.middleware.defaults :refer [wrap-defaults api-defaults]]
             [ring.middleware.gzip :refer [wrap-gzip]]
+            [ring.logger :refer [wrap-with-logger]]
             [environ.core :refer [env]]
             [org.httpkit.server :refer [run-server]]
             [taoensso.sente :as sente]
@@ -80,6 +81,7 @@
 (def http-handler
   (-> routes
       (wrap-defaults api-defaults)
+      wrap-with-logger
       wrap-gzip))
 
 (defn -main [& [port]]
