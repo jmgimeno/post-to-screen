@@ -28,3 +28,12 @@ docker build -t post-to-screen .
 ```shell
 docker run --detach --publish 8000:10555 --name post-to-screen-1 post-to-screen
 ````
+
+## Deploy to fly.io
+
+```shell
+flyctl auth login
+flyctl launch
+````
+
+And the app is deployed at [post-to-screen](https://post-to-screen.fly.dev/)
