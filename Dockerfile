@@ -1,9 +1,9 @@
 FROM openjdk:17-jdk-slim
 
+WORKDIR /home/app
+
+ADD ./target/*standalone.jar ./post-to-screen.jar
+
 EXPOSE 10555
 
-COPY target/post-to-screen.jar /app/
-
-WORKDIR /app
-
-CMD ["java", "-jar", "post-to-screen.jar"]
+CMD java $JAVA_OPTS -jar post-to-screen.jar

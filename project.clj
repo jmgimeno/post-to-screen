@@ -28,7 +28,7 @@
 
   :clean-targets ^{:protect false} [:target-path :compile-path "resources/public/js"]
 
-  :uberjar-name "post-to-screen.jar"
+  ;;:uberjar-name "post-to-screen.jar"
 
   :main post-to-screen.server
 
