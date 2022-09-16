@@ -1,15 +1,14 @@
 (ns post-to-screen.server
   (:require [clojure.java.io :as io]
-            [compojure.core :refer [ANY GET PUT POST DELETE defroutes]]
+            [compojure.core :refer [GET POST defroutes]]
             [compojure.route :refer [resources not-found]]
             [ring.middleware.defaults :refer [wrap-defaults api-defaults]]
             [ring.middleware.gzip :refer [wrap-gzip]]
-            [ring.middleware.logger :refer [wrap-with-logger]]
             [environ.core :refer [env]]
             [org.httpkit.server :refer [run-server]]
             [taoensso.sente :as sente]
             [taoensso.sente.server-adapters.http-kit :refer (sente-web-server-adapter)]
-            [clojure.core.async :as async :refer [<! <!! chan go-loop thread]])
+            [clojure.core.async :as async :refer [<! go-loop thread]])
   (:import [java.util UUID])
   (:gen-class))
 
@@ -25,7 +24,7 @@
 
 ; Event handling
 
-(defmulti handle-event (fn [[ev-id ev-data]] ev-id))
+(defmulti handle-event (fn [[ev-id _]] ev-id))
 
 (defmethod handle-event :post-to-screen/code [event]
   #_(println "Received " event)
@@ -81,7 +80,6 @@
 (def http-handler
   (-> routes
       (wrap-defaults api-defaults)
-      wrap-with-logger
       wrap-gzip))
 
 (defn -main [& [port]]
