@@ -58,13 +58,13 @@
             (reverse posts))]]
      (when (seq posts)
        [:div.col-md-10
-        [:pre#codeview
-         [:code (get-in posts [selected-post :code])]]])]))
+        [:pre.language-java
+         [:code#codeview (get-in posts [selected-post :code])]]])]))
 
 (defn colorize-code []
   (let [codeview (-> js/document
                      (.getElementById "codeview"))]
-    (.highlightBlock js/hljs codeview)))
+    (.highlightElement js/hljs codeview)))
 
 (def code-view
   (with-meta code-view
