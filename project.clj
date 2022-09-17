@@ -17,6 +17,7 @@
                  [com.taoensso/sente "1.8.1"]
                  [hiccup "1.0.5"]
                  [reagent "0.5.1"]
+                 [cljsjs/bootstrap "3.4.1-0"]
                  [cljsjs/highlight "11.5.1-0"]]
 
   :plugins [[lein-cljsbuild "1.1.8"]
