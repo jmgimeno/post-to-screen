@@ -1,8 +1,11 @@
 (ns post-to-screen.core
-  (:require-macros [cljs.core.async.macros :as asyncm :refer (go go-loop)])
-  (:require [reagent.core :as reagent :refer [atom]]
-            [cljs.core.async :as async :refer (<! >! put! chan)]
-            [taoensso.sente  :as sente :refer (cb-success?)]))
+  (:require-macros [cljs.core.async.macros :as asyncm :refer (go-loop)])
+  (:require [reagent.core :as reagent :refer [atom, render-component]]
+            [cljs.core.async :as async :refer (<!)]
+            [taoensso.sente  :as sente]
+            [cljsjs.bootstrap]
+            [cljsjs.highlight]
+            [cljsjs.highlight.langs.java]))
 
 (enable-console-print!)
 
@@ -33,13 +36,13 @@
 
 (defn event-loop [data]
   (go-loop []
-           (let [{:keys [event]} (<! ch-chsk)
-                 [ev-id ev-data] event]
-             (when (vector? ev-data)
-               (case ev-id
-                 :chsk/recv (handle-event ev-data data)
-                 nil))
-             (recur))))
+    (let [{:keys [event]} (<! ch-chsk)
+          [ev-id ev-data] event]
+      (when (vector? ev-data)
+        (case ev-id
+          :chsk/recv (handle-event ev-data data)
+          nil))
+      (recur))))
 
 ; UI
 
@@ -56,21 +59,22 @@
             (reverse posts))]]
      (when (seq posts)
        [:div.col-md-10
-        [:pre#codeview
-         [:code (get-in posts [selected-post :code])]]])]))
+        [:pre.language-java
+         [:code#codeview (get-in posts [selected-post :code])]]])]))
 
 (defn colorize-code []
   (let [codeview (-> js/document
                      (.getElementById "codeview"))]
-    (.highlightBlock js/hljs codeview)))
+    (when codeview
+      (.highlightElement js/hljs codeview))))
 
 (def code-view
   (with-meta code-view
-             {:component-did-mount
-              (fn [_] (colorize-code))
+    {:component-did-mount
+     (fn [_] (colorize-code))
 
-              :component-did-update
-              (fn [_ _] (colorize-code))}))
+     :component-did-update
+     (fn [_ _] (colorize-code))}))
 
 (defn submit-code [data e]
   (let [code (-> js/document
@@ -94,11 +98,11 @@
 
 (def post-form
   (with-meta post-form
-             {:component-did-mount
-              (fn [_]
-                (-> js/document
-                    (.getElementById "code")
-                    .focus))}))
+    {:component-did-mount
+     (fn [_]
+       (-> js/document
+           (.getElementById "code")
+           .focus))}))
 
 (defn navigation-bar [data]
   [:nav.navbar.navbar-default
@@ -134,8 +138,8 @@
                     :selected-post 0
                     :posts         []})]
     (event-loop data)
-    (reagent/render-component
-      [application data]
-      (. js/document (getElementById "app")))))
+    (render-component
+     [application data]
+     (. js/document (getElementById "app")))))
 
 (main)
