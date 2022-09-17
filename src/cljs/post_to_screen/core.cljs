@@ -2,7 +2,9 @@
   (:require-macros [cljs.core.async.macros :as asyncm :refer (go-loop)])
   (:require [reagent.core :as reagent :refer [atom, render-component]]
             [cljs.core.async :as async :refer (<!)]
-            [taoensso.sente  :as sente]))
+            [taoensso.sente  :as sente]
+            [cljsjs.highlight]
+            [cljsjs.highlight.langs.java]))
 
 (enable-console-print!)
 
