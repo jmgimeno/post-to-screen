@@ -4,12 +4,12 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
 
-  :dependencies [[org.clojure/clojure "1.8.0"]
+  :dependencies [[org.clojure/clojure "1.11.1"]
                  [org.clojure/clojurescript "1.11.60"]
                  [ring "1.9.6"]
                  [ring/ring-defaults "0.3.3"]
                  [bk/ring-gzip "0.3.0"]
-                 [ring.middleware.logger "0.5.0"]
+                 [ring-logger "1.1.1"]
                  [compojure "1.7.0"]
                  [environ "1.2.0"]
                  [http-kit "2.6.0"]
@@ -17,39 +17,25 @@
                  [com.taoensso/sente "1.8.1"]
                  [hiccup "1.0.5"]
                  [reagent "0.5.1"]
+                 [cljsjs/bootstrap "3.4.1-0"]
                  [cljsjs/highlight "11.5.1-0"]]
 
   :plugins [[lein-cljsbuild "1.1.8"]
-            [lein-environ "1.2.0"]] 
+            [lein-environ "1.2.0"]]
 
-  :source-paths ["src/clj" "src/cljs" "dev"]
+  :source-paths ["src/clj" "src/cljs"]
 
-  :test-paths ["test/clj"]
+  :clean-targets ^{:protect false} ["resources/public/js/compiled"] 
 
-  :clean-targets ^{:protect false} [:target-path :compile-path "resources/public/js"]
-
-  ;;:uberjar-name "post-to-screen.jar"
-
-  :main post-to-screen.server
+  :hooks [leiningen.cljsbuild]
 
   :cljsbuild {:builds
-              {:app
+              {:prod
                {:source-paths ["src/cljs"]
                 :compiler {:main post-to-screen.core
-                           :asset-path "js/compiled/out"
                            :output-to "resources/public/js/compiled/post_to_screen.js"
-                           :output-dir "resources/public/js/compiled/out"
-                           :source-map-timestamp true}}}}
+                           :optimizations :advanced}}}}
 
-  :profiles {
-             :uberjar
-             {:source-paths ^:replace ["src/clj"]
-              :hooks [leiningen.cljsbuild]
-              :omit-source true
-              :aot :all
-              :cljsbuild {:builds
-                          {:app
-                           {:source-paths ^:replace ["src/cljs"]
-                            :compiler
-                            {:optimizations :advanced
-                             :pretty-print false}}}}}})
+  :profiles {:uberjar {:main post-to-screen.server
+                       :omit-source true
+                       :aot :all}})
