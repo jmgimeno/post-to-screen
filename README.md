@@ -2,29 +2,39 @@
 
 For sharing code on the screen.
 
-## To Build
+## To compile and run for development
 
 ```shell
-lein uberjar
-````
+lein clean
+lein cljsbuild one dev
+lein run
+open http://localhost:10555
+```
 
-## To Run
+## To build the standalone jar
+
+```shell
+lein clean
+lein uberjar
+```
+
+## To run the standalone jar
 
 ```shell
 java -jar target/post-to-screen-0.1.0-SNAPSHOT-standalone.jar
 open http://localhost:10555
-````
+```
 
 or use the environment variable `PORT` to change the port
 
-## To Build Image
+## To build the docker image
 
 ```shell
 docker build -t post-to-screen .
-````
+```
 
-## To Run Image
+## To run the docker image
 
 ```shell
 docker run --detach --publish 8000:10555 --name post-to-screen-1 post-to-screen
-````
+```

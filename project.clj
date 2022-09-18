@@ -34,8 +34,16 @@
                {:source-paths ["src/cljs"]
                 :compiler {:main post-to-screen.core
                            :output-to "resources/public/js/compiled/post_to_screen.js"
-                           :optimizations :advanced}}}}
+                           :optimizations :advanced}}
+               :dev
+               {:source-paths ["src/cljs"]
+                :compiler {:main post-to-screen.core
+                           :output-to "resources/public/js/compiled/post_to_screen.js"
+                           :output-dir "resources/public/js/compiled"
+                           :optimizations :whitespace
+                           :source-map "resources/public/js/compiled/post_to_screen.js.map"}}}}
 
-  :profiles {:uberjar {:main post-to-screen.server
-                       :omit-source true
+  :main post-to-screen.server
+
+  :profiles {:uberjar {:omit-source true
                        :aot :all}})
