@@ -16,7 +16,9 @@
                  [org.clojure/core.async "1.5.648"]
                  [com.taoensso/sente "1.8.1"]
                  [hiccup "1.0.5"]
-                 [reagent "0.5.1"]
+                 [reagent "1.1.1"]
+                 [cljsjs/react "17.0.2-0"]
+                 [cljsjs/react-dom "17.0.2-0"]
                  [cljsjs/bootstrap "3.4.1-0"]
                  [cljsjs/highlight "11.5.1-0"]]
 
